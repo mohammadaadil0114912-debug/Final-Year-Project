@@ -90,7 +90,7 @@ class VocabularyRepository:
         return SignMedia(
             gloss=f"FS:{clean_gloss}",
             media_url=None,
-            fallback_image=f"https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/ASL_A.svg/120px-ASL_A.svg.png",
+            fallback_image=None,
             thumbnail_url=None,
             media_type="fingerspell",
             source="System Fingerspelling Fallback",

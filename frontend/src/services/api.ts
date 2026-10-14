@@ -2,7 +2,7 @@ import axios from 'axios';
 import { TranslationResult, User, VocabularyItem, SavedPhrase, HistoryItem, EvaluationReport } from '../types';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: ((import.meta as any).env?.VITE_API_BASE_URL) || '/api',
   timeout: 30000,
 });
 
@@ -113,6 +113,10 @@ export const apiClient = {
   async getEvaluation(forceFresh: boolean = false): Promise<EvaluationReport> {
     const res = await api.get('/research/evaluation', { params: { forceFresh } });
     return res.data.data;
+  },
+
+  async getResearchEvaluation(forceFresh: boolean = false): Promise<EvaluationReport> {
+    return this.getEvaluation(forceFresh);
   },
 
   // Admin

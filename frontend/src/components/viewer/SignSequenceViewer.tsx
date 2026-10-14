@@ -37,10 +37,31 @@ export const SignSequenceViewer: React.FC<SignSequenceViewerProps> = ({
   const [copiedGloss, setCopiedGloss] = useState<boolean>(false);
   const [copiedText, setCopiedText] = useState<boolean>(false);
   const [selectedSignForDetails, setSelectedSignForDetails] = useState<SignMedia | null>(null);
+  const [failedMedia, setFailedMedia] = useState<Record<number, boolean>>({});
+  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
+  // Reset failed media states when signs change
+  useEffect(() => {
+    setFailedMedia({});
+    setFailedImages({});
+  }, [signs]);
+
   const activeSign = signs[currentIndex] || null;
+  const isFingerspelled = Boolean(activeSign?.is_fingerspelled || activeSign?.gloss?.startsWith('FS:'));
+  const isVideoCandidate = Boolean(activeSign?.media_url && activeSign.media_type === 'video');
+  const isVideoFailed = Boolean(failedMedia[currentIndex]);
+  const isVideoActive = isVideoCandidate && !isVideoFailed;
+  const isImageCandidate = Boolean(activeSign?.fallback_image && !failedImages[currentIndex]);
+
+  const handleVideoError = (idx: number) => {
+    setFailedMedia(prev => ({ ...prev, [idx]: true }));
+  };
+
+  const handleImageError = (idx: number) => {
+    setFailedImages(prev => ({ ...prev, [idx]: true }));
+  };
 
   // Auto-play next sign when video ends during sequence playback
   const handleVideoEnded = () => {
@@ -53,10 +74,10 @@ export const SignSequenceViewer: React.FC<SignSequenceViewerProps> = ({
     }
   };
 
-  // Timer-based fallback auto-advancement for static fallback images or fingerspelling
+  // Timer-based fallback auto-advancement for static fallback cards, fingerspelling, or failed video media
   useEffect(() => {
     let timer: any;
-    if (isPlaying && activeSign && (!activeSign.media_url || activeSign.media_type !== 'video')) {
+    if (isPlaying && activeSign && !isVideoActive) {
       timer = setTimeout(() => {
         if (currentIndex < signs.length - 1) {
           setCurrentIndex(prev => prev + 1);
@@ -66,7 +87,7 @@ export const SignSequenceViewer: React.FC<SignSequenceViewerProps> = ({
       }, 1800 / playbackSpeed);
     }
     return () => clearTimeout(timer);
-  }, [isPlaying, currentIndex, activeSign, playbackSpeed, signs.length]);
+  }, [isPlaying, currentIndex, activeSign, isVideoActive, playbackSpeed, signs.length]);
 
   // Adjust video playback speed
   useEffect(() => {
@@ -163,75 +184,126 @@ export const SignSequenceViewer: React.FC<SignSequenceViewerProps> = ({
       </div>
 
       {/* Main Video / Sign Presentation Stage */}
-      <div className="relative bg-slate-950 flex flex-col items-center justify-center min-h-[340px] max-h-[460px] overflow-hidden">
-        {activeSign && activeSign.media_url && activeSign.media_type === 'video' ? (
+      <div className="relative bg-slate-950 flex flex-col items-center justify-center min-h-[360px] max-h-[480px] overflow-hidden p-4">
+        {isVideoActive && activeSign?.media_url ? (
           <video
             ref={videoRef}
-            key={activeSign.media_url + currentIndex}
+            key={(activeSign.media_url || '') + currentIndex}
             src={activeSign.media_url}
             autoPlay={isPlaying}
             playsInline
             muted
             onEnded={handleVideoEnded}
+            onError={() => handleVideoError(currentIndex)}
             className="w-full max-h-[420px] object-contain rounded-lg"
           />
-        ) : activeSign && activeSign.fallback_image ? (
+        ) : isFingerspelled && activeSign ? (
+          /* Dedicated Fingerspelling Component */
+          <div className="flex flex-col items-center justify-center text-center text-white space-y-3 py-6 px-4 max-w-lg w-full animate-fade-in">
+            <div className="flex items-center space-x-2">
+              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Fingerspelling Sequence (Manual Alphabet)
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Lexical term <span className="font-mono font-bold text-amber-300">'{activeSign.gloss.replace('FS:', '')}'</span> is spelled out using individual manual alphabet letters.
+            </p>
+
+            {/* Clearly labeled individual letter tiles */}
+            <div className="flex flex-wrap items-center justify-center gap-2 max-w-sm my-3">
+              {activeSign.gloss.replace('FS:', '').split('').map((char, idx) => (
+                <div
+                  key={idx}
+                  className="w-12 h-14 rounded-xl bg-slate-900/90 border-2 border-amber-500/70 shadow-lg flex flex-col items-center justify-center text-amber-300 font-mono font-bold text-2xl"
+                >
+                  <span>{char}</span>
+                  <span className="text-[8px] font-sans font-medium text-slate-400 -mt-1 uppercase">Letter</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Explicit Linguistic Disclaimer - Never claim letter tiles are authentic hand signs */}
+            <div className="text-center px-4 py-2 rounded-xl bg-amber-950/60 border border-amber-800/80 text-[11px] text-amber-200/90 max-w-sm shadow-inner">
+              <span className="font-bold">Manual Alphabet Representation</span>: Individual letter spelling sequence. This is a textual letter breakdown, not an authentic recorded ASL hand sign.
+            </div>
+          </div>
+        ) : isImageCandidate && activeSign?.fallback_image ? (
+          /* Fallback image if verified and available */
           <div className="flex flex-col items-center justify-center p-8 text-center text-white space-y-4">
             <div className="w-36 h-36 rounded-2xl bg-white/10 backdrop-blur-sm p-4 flex items-center justify-center border border-white/20 shadow-xl">
               <img
                 src={activeSign.fallback_image}
                 alt={activeSign.gloss}
+                onError={() => handleImageError(currentIndex)}
                 className="max-h-full max-w-full object-contain filter invert"
               />
             </div>
-            {activeSign.is_fingerspelled ? (
-              <div className="space-y-1">
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                  Fingerspelling Fallback
-                </span>
-                <p className="text-xs text-slate-400">Lexical term '{activeSign.gloss.replace('FS:', '')}' spelled manually.</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/20 text-brand-300 border border-brand-500/40">
-                  Verified ASL Depiction
-                </span>
-              </div>
-            )}
+            <div className="space-y-1">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-brand-500/20 text-brand-300 border border-brand-500/40">
+                Verified ASL Illustration
+              </span>
+            </div>
           </div>
         ) : (
-          <div className="p-8 text-center text-slate-400">
-            <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto mb-2" />
-            <p className="text-sm font-semibold">Sign Asset Currently Unavailable</p>
-            <p className="text-xs text-slate-500 mt-1">Gloss: {activeSign?.gloss}</p>
+          /* Explicit Linguistic Concept Card for pending or network-blocked media */
+          <div className="flex flex-col items-center justify-center p-6 text-center text-white space-y-3 max-w-md animate-fade-in">
+            <div className="w-20 h-20 rounded-2xl bg-brand-950/80 border border-brand-700/60 flex items-center justify-center shadow-lg">
+              <Info className="w-10 h-10 text-brand-400" />
+            </div>
+
+            <div className="space-y-1">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                Sign Concept (Visual Asset Pending Verification)
+              </span>
+              <h3 className="text-2xl font-mono font-bold text-white tracking-wider">
+                {activeSign?.gloss}
+              </h3>
+              <p className="text-xs text-slate-400">
+                Category: <span className="capitalize text-slate-300">{activeSign?.category || 'General'}</span>
+                {activeSign?.non_manual_signal && (
+                  <span> • NMS: <span className="text-cyan-300 capitalize">{activeSign.non_manual_signal.replace('_', ' ')}</span></span>
+                )}
+              </p>
+            </div>
+
+            {/* Explicit Disclaimer - Never present concept card as authentic ASL hand sign */}
+            <div className="text-center px-4 py-2 rounded-xl bg-slate-900/80 border border-slate-700 text-[11px] text-slate-300 max-w-sm shadow-inner">
+              <span className="font-bold text-cyan-400">Linguistic Concept Representation</span>: Authentic recorded video demonstration is unavailable or network-blocked. Displaying validated linguistic metadata only.
+            </div>
           </div>
         )}
 
         {/* Current Sign Overlay Card */}
         {activeSign && (
-          <div className="absolute bottom-4 left-4 right-4 bg-slate-900/80 backdrop-blur-md border border-slate-700/60 p-3 rounded-xl flex items-center justify-between text-white shadow-lg">
+          <div className="absolute bottom-4 left-4 right-4 bg-slate-900/85 backdrop-blur-md border border-slate-700/70 p-3 rounded-xl flex items-center justify-between text-white shadow-lg">
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-mono text-base font-bold text-white tracking-wide">
                   {activeSign.gloss}
                 </span>
-                {activeSign.verified ? (
-                  <span className="flex items-center text-[10px] text-brand-400 font-medium bg-brand-950/60 px-1.5 py-0.5 rounded border border-brand-800">
-                    <ShieldCheck className="w-3 h-3 mr-0.5" /> Verified
+                {isFingerspelled ? (
+                  <span className="flex items-center text-[10px] text-amber-300 font-medium bg-amber-950/80 px-2 py-0.5 rounded-full border border-amber-600/70">
+                    <AlertTriangle className="w-3 h-3 mr-1" /> Fingerspelling
+                  </span>
+                ) : isVideoActive ? (
+                  <span className="flex items-center text-[10px] text-emerald-400 font-medium bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-700">
+                    <ShieldCheck className="w-3 h-3 mr-1" /> Verified Video
                   </span>
                 ) : (
-                  <span className="flex items-center text-[10px] text-amber-400 font-medium bg-amber-950/60 px-1.5 py-0.5 rounded border border-amber-800">
-                    <AlertTriangle className="w-3 h-3 mr-0.5" /> Fallback
+                  <span className="flex items-center text-[10px] text-cyan-300 font-medium bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-700">
+                    <Info className="w-3 h-3 mr-1" /> Concept Metadata
                   </span>
                 )}
                 {activeSign.non_manual_signal && (
-                  <span className="text-[10px] text-cyan-300 bg-cyan-950/60 px-1.5 py-0.5 rounded border border-cyan-800">
+                  <span className="text-[10px] text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
                     NMS: {activeSign.non_manual_signal.replace('_', ' ')}
                   </span>
                 )}
               </div>
-              <div className="text-[11px] text-slate-300 mt-0.5">
-                Category: <span className="capitalize">{activeSign.category || 'General'}</span> • Source: {activeSign.source || 'Open Educational Catalog'}
+              <div className="text-[11px] text-slate-400 mt-0.5">
+                Category: <span className="capitalize text-slate-300">{activeSign.category || 'General'}</span> • Source: {activeSign.source || 'Open Educational Catalog'}
               </div>
             </div>
 
@@ -323,6 +395,10 @@ export const SignSequenceViewer: React.FC<SignSequenceViewerProps> = ({
         <div className="flex items-center space-x-2 overflow-x-auto pb-2 scrollbar-thin">
           {signs.map((sign, index) => {
             const isSelected = index === currentIndex;
+            const itemFingerspelled = Boolean(sign.is_fingerspelled || sign.gloss.startsWith('FS:'));
+            const itemVideoFailed = Boolean(failedMedia[index]);
+            const itemHasWorkingVideo = Boolean(sign.media_url && sign.media_type === 'video' && !itemVideoFailed);
+
             return (
               <button
                 key={sign.gloss + index}
@@ -336,10 +412,20 @@ export const SignSequenceViewer: React.FC<SignSequenceViewerProps> = ({
                     : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-brand-400'
                 }`}
               >
-                <div className="font-mono text-xs font-bold leading-tight flex items-center space-x-1">
+                <div className="font-mono text-xs font-bold leading-tight flex items-center space-x-1.5">
                   <span>{sign.gloss}</span>
-                  {sign.is_fingerspelled && (
-                    <span className="text-[9px] px-1 rounded bg-amber-500/20 text-amber-500 font-sans">FS</span>
+                  {itemFingerspelled ? (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-sans font-semibold">
+                      FS
+                    </span>
+                  ) : itemHasWorkingVideo ? (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-sans font-semibold">
+                      Video
+                    </span>
+                  ) : (
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-sans font-semibold">
+                      Concept
+                    </span>
                   )}
                 </div>
                 <div className={`text-[10px] mt-0.5 ${isSelected ? 'text-brand-100' : 'text-slate-400'}`}>
@@ -373,21 +459,25 @@ export const SignSequenceViewer: React.FC<SignSequenceViewerProps> = ({
                 <span className="capitalize">{selectedSignForDetails.category || 'General Conversation'}</span>
               </div>
               <div>
-                <strong className="text-slate-900 dark:text-white block font-semibold">Verification Status:</strong>
-                {selectedSignForDetails.verified ? (
+                <strong className="text-slate-900 dark:text-white block font-semibold">Verification & Media Status:</strong>
+                {selectedSignForDetails.is_fingerspelled || selectedSignForDetails.gloss.startsWith('FS:') ? (
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                    ⚠ Manual alphabet spelling sequence (Lexical term not cataloged in standard video lexicon)
+                  </span>
+                ) : selectedSignForDetails.verified && !failedMedia[currentIndex] && selectedSignForDetails.media_url ? (
                   <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                    ✓ Verified in curated educational ASL database
+                    ✓ Verified in curated educational ASL database (Video stream)
                   </span>
                 ) : (
-                  <span className="text-amber-600 dark:text-amber-400 font-medium">
-                    ⚠ Manual fingerspelling fallback representation
+                  <span className="text-cyan-600 dark:text-cyan-400 font-medium">
+                    ℹ Linguistic concept representation (Recorded video pending verification / network stream unavailable)
                   </span>
                 )}
               </div>
               {selectedSignForDetails.non_manual_signal && (
                 <div>
                   <strong className="text-slate-900 dark:text-white block font-semibold">Non-Manual Marker (NMS):</strong>
-                  <span>{selectedSignForDetails.non_manual_signal}</span>
+                  <span>{selectedSignForDetails.non_manual_signal.replace('_', ' ')}</span>
                 </div>
               )}
               <div>
