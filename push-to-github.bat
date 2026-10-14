@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 echo ========================================================
 echo   Pushing ASL Bridge AI to GitHub
 echo   Repository: https://github.com/mohammadaadil0114912-debug/Final-Year-Project.git
