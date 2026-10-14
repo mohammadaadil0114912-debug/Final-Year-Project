@@ -1,0 +1,107 @@
+[
+  {
+    "id": "eval-001",
+    "english_text": "Hello, what is your name?",
+    "reference_asl_gloss": "HELLO YOUR NAME WHAT {q}",
+    "category": "greetings_questions",
+    "linguistic_features": ["wh-question", "terminal_movement", "non_manual_signal"]
+  },
+  {
+    "id": "eval-002",
+    "english_text": "Where is the nearest hospital?",
+    "reference_asl_gloss": "HOSPITAL NEAR WHERE {q}",
+    "category": "emergency_questions",
+    "linguistic_features": ["wh-question", "copula_omission", "article_omission"]
+  },
+  {
+    "id": "eval-003",
+    "english_text": "I do not understand.",
+    "reference_asl_gloss": "I UNDERSTAND NOT {neg}",
+    "category": "negation",
+    "linguistic_features": ["negation_movement", "auxiliary_omission", "headshake_marker"]
+  },
+  {
+    "id": "eval-004",
+    "english_text": "I will see the doctor tomorrow.",
+    "reference_asl_gloss": "TOMORROW DOCTOR I SEE",
+    "category": "temporal_framing",
+    "linguistic_features": ["time_fronting", "future_marker", "article_omission"]
+  },
+  {
+    "id": "eval-005",
+    "english_text": "Please help me.",
+    "reference_asl_gloss": "PLEASE HELP ME",
+    "category": "emergency",
+    "linguistic_features": ["politeness_marker", "directional_verb"]
+  },
+  {
+    "id": "eval-006",
+    "english_text": "I need an ASL interpreter.",
+    "reference_asl_gloss": "ASL INTERPRETER I NEED",
+    "category": "emergency_medical",
+    "linguistic_features": ["topic_comment", "article_omission"]
+  },
+  {
+    "id": "eval-007",
+    "english_text": "Are you hungry?",
+    "reference_asl_gloss": "YOU HUNGRY YOU {yn_q}",
+    "category": "polar_questions",
+    "linguistic_features": ["yes_no_question", "pronoun_copy", "copula_omission"]
+  },
+  {
+    "id": "eval-008",
+    "english_text": "Can you please write it down?",
+    "reference_asl_gloss": "PLEASE WRITE YOU {yn_q}",
+    "category": "accessibility_request",
+    "linguistic_features": ["modal_reduction", "politeness_marker"]
+  },
+  {
+    "id": "eval-009",
+    "english_text": "Yesterday I went to school.",
+    "reference_asl_gloss": "YESTERDAY SCHOOL I GO",
+    "category": "temporal_framing",
+    "linguistic_features": ["time_fronting", "tense_inflection_loss", "topic_comment"]
+  },
+  {
+    "id": "eval-0010",
+    "english_text": "Thank you for your help.",
+    "reference_asl_gloss": "THANK-YOU YOUR HELP",
+    "category": "greetings",
+    "linguistic_features": ["formulaic_expression", "preposition_omission"]
+  },
+  {
+    "id": "eval-0011",
+    "english_text": "Where is the bathroom?",
+    "reference_asl_gloss": "BATHROOM WHERE {q}",
+    "category": "basic_needs",
+    "linguistic_features": ["wh-question", "copula_omission", "terminal_wh"]
+  },
+  {
+    "id": "eval-0012",
+    "english_text": "I have pain here.",
+    "reference_asl_gloss": "PAIN HERE I HAVE",
+    "category": "emergency_medical",
+    "linguistic_features": ["topic_comment", "deictic_point"]
+  },
+  {
+    "id": "eval-0013",
+    "english_text": "Nice to meet you.",
+    "reference_asl_gloss": "NICE MEET YOU",
+    "category": "greetings",
+    "linguistic_features": ["copula_omission", "infinitive_to_omission"]
+  },
+  {
+    "id": "eval-0014",
+    "english_text": "Do you like this book?",
+    "reference_asl_gloss": "THIS BOOK YOU LIKE {yn_q}",
+    "category": "polar_questions",
+    "linguistic_features": ["topic_fronting", "auxiliary_do_omission"]
+  },
+  {
+    "id": "eval-0015",
+    "english_text": "I do not have money.",
+    "reference_asl_gloss": "MONEY I NONE {neg}",
+    "category": "negation",
+    "linguistic_features": ["topic_comment", "lexical_negation_none"]
+  }
+]
