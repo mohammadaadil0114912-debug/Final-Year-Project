@@ -137,6 +137,23 @@ class InMemoryStore {
         createdAt: new Date().toISOString()
       });
     });
+
+    // 4. Load persisted benchmark evaluation run if present on disk
+    try {
+      const evalPath = path.resolve(process.cwd(), '../datasets/latest_evaluation.json');
+      const altEvalPath = path.resolve(process.cwd(), 'datasets/latest_evaluation.json');
+      const targetEvalPath = fs.existsSync(evalPath) ? evalPath : altEvalPath;
+
+      if (fs.existsSync(targetEvalPath)) {
+        const rawEval = fs.readFileSync(targetEvalPath, 'utf-8');
+        const runRecord: IEvaluationRun = JSON.parse(rawEval);
+        if (runRecord && runRecord.id) {
+          this.evaluations.set(runRecord.id, runRecord);
+        }
+      }
+    } catch (e) {
+      console.warn('[Store] Could not load persisted evaluation run from disk:', e);
+    }
   }
 }
 

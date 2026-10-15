@@ -1,0 +1,160 @@
+{
+  "id": "eval-run-1792046127698",
+  "datasetName": "core_asl_bench_v1",
+  "strategies": [
+    "baseline_lexical",
+    "rule_nlp",
+    "rag_grounded"
+  ],
+  "results": [
+    {
+      "strategy": "baseline_lexical",
+      "total_samples": 15,
+      "bleu_1": 63.15,
+      "bleu_2": 31.96,
+      "bleu_4": 5.07,
+      "chrf_score": 51.12,
+      "vocabulary_coverage_rate": 0.632,
+      "unsupported_output_rate": 0.368,
+      "avg_latency_ms": 0.23,
+      "sample_outputs": [
+        {
+          "id": "eval-001",
+          "english": "Hello, what is your name?",
+          "reference": "HELLO YOUR NAME WHAT {q}",
+          "generated": "HELLO WHAT IS YOUR NAME",
+          "bleu_1": 80,
+          "chrf": 48.48,
+          "coverage": 0.8
+        },
+        {
+          "id": "eval-002",
+          "english": "Where is the nearest hospital?",
+          "reference": "HOSPITAL NEAR WHERE {q}",
+          "generated": "WHERE IS THE NEAREST HOSPITAL",
+          "bleu_1": 40,
+          "chrf": 41.03,
+          "coverage": 0.4
+        },
+        {
+          "id": "eval-003",
+          "english": "I do not understand.",
+          "reference": "I UNDERSTAND NOT {neg}",
+          "generated": "I DO NOT UNDERSTAND",
+          "bleu_1": 75,
+          "chrf": 48.28,
+          "coverage": 0.5
+        },
+        {
+          "id": "eval-004",
+          "english": "I will see the doctor tomorrow.",
+          "reference": "TOMORROW DOCTOR I SEE",
+          "generated": "I WILL SEE THE DOCTOR TOMORROW",
+          "bleu_1": 66.67,
+          "chrf": 43.24,
+          "coverage": 0.667
+        }
+      ]
+    },
+    {
+      "strategy": "rule_nlp",
+      "total_samples": 15,
+      "bleu_1": 81.25,
+      "bleu_2": 56.55,
+      "bleu_4": 21.79,
+      "chrf_score": 67.54,
+      "vocabulary_coverage_rate": 0.769,
+      "unsupported_output_rate": 0.231,
+      "avg_latency_ms": 0.22,
+      "sample_outputs": [
+        {
+          "id": "eval-001",
+          "english": "Hello, what is your name?",
+          "reference": "HELLO YOUR NAME WHAT {q}",
+          "generated": "HELLO YOUR NAME WHAT {q}",
+          "bleu_1": 100,
+          "chrf": 100,
+          "coverage": 1
+        },
+        {
+          "id": "eval-002",
+          "english": "Where is the nearest hospital?",
+          "reference": "HOSPITAL NEAR WHERE {q}",
+          "generated": "NEAREST HOSPITAL WHERE {q}",
+          "bleu_1": 75,
+          "chrf": 59.46,
+          "coverage": 0.667
+        },
+        {
+          "id": "eval-003",
+          "english": "I do not understand.",
+          "reference": "I UNDERSTAND NOT {neg}",
+          "generated": "I UNDERSTAND NOT {neg}",
+          "bleu_1": 100,
+          "chrf": 100,
+          "coverage": 0.667
+        },
+        {
+          "id": "eval-004",
+          "english": "I will see the doctor tomorrow.",
+          "reference": "TOMORROW DOCTOR I SEE",
+          "generated": "TOMORROW I WILL SEE DOCTOR",
+          "bleu_1": 80,
+          "chrf": 47.06,
+          "coverage": 0.8
+        }
+      ]
+    },
+    {
+      "strategy": "rag_grounded",
+      "total_samples": 15,
+      "bleu_1": 81.25,
+      "bleu_2": 56.55,
+      "bleu_4": 21.79,
+      "chrf_score": 67.54,
+      "vocabulary_coverage_rate": 0.769,
+      "unsupported_output_rate": 0.231,
+      "avg_latency_ms": 2.3,
+      "sample_outputs": [
+        {
+          "id": "eval-001",
+          "english": "Hello, what is your name?",
+          "reference": "HELLO YOUR NAME WHAT {q}",
+          "generated": "HELLO YOUR NAME WHAT {q}",
+          "bleu_1": 100,
+          "chrf": 100,
+          "coverage": 1
+        },
+        {
+          "id": "eval-002",
+          "english": "Where is the nearest hospital?",
+          "reference": "HOSPITAL NEAR WHERE {q}",
+          "generated": "NEAREST HOSPITAL WHERE {q}",
+          "bleu_1": 75,
+          "chrf": 59.46,
+          "coverage": 0.67
+        },
+        {
+          "id": "eval-003",
+          "english": "I do not understand.",
+          "reference": "I UNDERSTAND NOT {neg}",
+          "generated": "I UNDERSTAND NOT {neg}",
+          "bleu_1": 100,
+          "chrf": 100,
+          "coverage": 0.67
+        },
+        {
+          "id": "eval-004",
+          "english": "I will see the doctor tomorrow.",
+          "reference": "TOMORROW DOCTOR I SEE",
+          "generated": "TOMORROW I WILL SEE DOCTOR",
+          "bleu_1": 80,
+          "chrf": 47.06,
+          "coverage": 0.8
+        }
+      ]
+    }
+  ],
+  "summaryAnalysis": "Across 15 gold-standard benchmark sentences, rule-aware architectures (Baseline B and System C: BLEU-4 21.8%, chrF++ 67.5) outperform direct word-by-word substitution (Baseline A: BLEU-4 5.1%, chrF++ 51.1) by +16.7 BLEU-4 and +16.4 chrF++ points due to ASL Topic-Comment restructuring, WH-movement, and time-fronting. On the current fixed rule set, System C and Baseline B achieve identical surface gloss translation scores (BLEU-4 21.8%, chrF++ 67.5). System C's distinctive contribution is verifiable knowledge grounding: it cross-validates all candidate tokens against the verified sign catalog (76.9% empirical coverage), retrieves vector knowledge evidence for provenance, and provides calibrated uncertainty diagnostics.",
+  "createdAt": "2026-10-15T06:35:27Z"
+}

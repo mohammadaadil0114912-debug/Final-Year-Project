@@ -11,6 +11,23 @@ class TranslationEngine:
     def __init__(self):
         pass
 
+    def compute_vocabulary_coverage(self, tokens: List[str]) -> Tuple[float, int, int]:
+        """
+        Computes empirical vocabulary coverage across lexical tokens.
+        Punctuation/grammatical tags (e.g. {q}, {neg}, {yn_q}) are excluded from the denominator.
+        Returns: (coverage_ratio, verified_count, total_eval_tokens)
+        """
+        eval_tokens = [t for t in tokens if not (t.startswith("{") and t.endswith("}"))]
+        if not eval_tokens:
+            return 1.0, 0, 0
+
+        verified_count = sum(
+            1 for t in eval_tokens
+            if vocab_repo.resolve_sign_media(t, term=t.lower()).verified
+        )
+        coverage = round(verified_count / len(eval_tokens), 3)
+        return coverage, verified_count, len(eval_tokens)
+
     def translate_baseline_a(self, text: str) -> Tuple[str, List[str], List[str]]:
         """
         Baseline A: Direct Dictionary / Word-to-Sign Lookup.
@@ -55,28 +72,20 @@ class TranslationEngine:
         missing_vocab: List[str] = []
         fingerspelled: List[str] = []
 
-        verified_count = 0
-        total_eval_tokens = 0
+        coverage, verified_count, total_eval_tokens = self.compute_vocabulary_coverage(gloss_tokens)
 
         for token in gloss_tokens:
-            # Ignore grammatical markers from vocabulary lookup count
             if token.startswith("{") and token.endswith("}"):
                 continue
 
-            total_eval_tokens += 1
-            # Check if token matches a verified ASL entry
             sign_media = vocab_repo.resolve_sign_media(token, term=token.lower())
-            
             if sign_media.verified:
-                verified_count += 1
                 signs.append(sign_media)
             else:
                 missing_vocab.append(token)
                 fingerspelled.append(token)
                 signs.append(sign_media)
 
-        # Calculate calibrated metrics
-        coverage = (verified_count / total_eval_tokens) if total_eval_tokens > 0 else 1.0
         avg_retrieval_rel = (
             sum(r["similarity_score"] for r in rag_results) / len(rag_results)
             if rag_results else 0.5
@@ -142,6 +151,7 @@ class TranslationEngine:
             start_time = time.time()
             gloss, tokens, _ = self.translate_baseline_a(text)
             signs = [vocab_repo.resolve_sign_media(t).model_dump() for t in tokens]
+            cov, _, _ = self.compute_vocabulary_coverage(tokens)
             duration = round((time.time() - start_time) * 1000, 2)
             return {
                 "request_id": f"base-a-{uuid.uuid4().hex[:6]}",
@@ -155,9 +165,9 @@ class TranslationEngine:
                 "fingerspelled_tokens": [],
                 "confidence": {
                     "overall_label": "Baseline dictionary lookup (No grammar restructuring)",
-                    "vocabulary_coverage": 0.8,
+                    "vocabulary_coverage": cov,
                     "retrieval_relevance": None,
-                    "model_confidence": 0.5,
+                    "model_confidence": round(0.5 * cov, 2),
                     "ocr_quality": None,
                     "speech_confidence": None,
                     "clarification_needed": False,
@@ -172,6 +182,7 @@ class TranslationEngine:
             start_time = time.time()
             gloss, tokens, keywords = self.translate_baseline_b(text)
             signs = [vocab_repo.resolve_sign_media(t).model_dump() for t in tokens if not (t.startswith("{") and t.endswith("}"))]
+            cov, _, _ = self.compute_vocabulary_coverage(tokens)
             duration = round((time.time() - start_time) * 1000, 2)
             return {
                 "request_id": f"base-b-{uuid.uuid4().hex[:6]}",
@@ -185,9 +196,9 @@ class TranslationEngine:
                 "fingerspelled_tokens": [],
                 "confidence": {
                     "overall_label": "Context-aware rule-based NLP",
-                    "vocabulary_coverage": 0.85,
+                    "vocabulary_coverage": cov,
                     "retrieval_relevance": None,
-                    "model_confidence": 0.75,
+                    "model_confidence": round(0.7 * cov, 2),
                     "ocr_quality": None,
                     "speech_confidence": None,
                     "clarification_needed": False,

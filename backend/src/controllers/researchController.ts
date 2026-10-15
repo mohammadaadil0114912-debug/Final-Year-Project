@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { Request, Response } from 'express';
 import { aiClient } from '../services/aiClient.js';
 import { store } from '../services/store.js';
@@ -27,6 +29,18 @@ export const researchController = {
       };
 
       store.evaluations.set(id, runRecord);
+
+      // Persist to disk so benchmark results survive backend restarts
+      try {
+        const evalPath = path.resolve(process.cwd(), '../datasets/latest_evaluation.json');
+        const altEvalPath = path.resolve(process.cwd(), 'datasets/latest_evaluation.json');
+        const targetDir = fs.existsSync(path.dirname(evalPath)) ? path.dirname(evalPath) : path.dirname(altEvalPath);
+        const savePath = path.join(targetDir, 'latest_evaluation.json');
+        fs.writeFileSync(savePath, JSON.stringify(runRecord, null, 2), 'utf-8');
+      } catch (saveErr: any) {
+        console.warn('[ResearchController] Failed to persist evaluation record to disk:', saveErr.message);
+      }
+
       return res.json({ success: true, data: runRecord });
     } catch (err: any) {
       console.error('[Research Evaluation Error]', err.message);

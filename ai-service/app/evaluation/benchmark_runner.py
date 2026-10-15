@@ -158,12 +158,59 @@ class BenchmarkRunner:
             "dataset_name": "core_asl_bench_v1",
             "evaluated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "results": strategy_results,
-            "summary_analysis": (
-                "Empirical evaluation demonstrates that System C (RAG-Grounded Context-Aware NLP) "
-                "substantially outperforms Baseline A (Word-to-Sign dictionary) and Baseline B (Pure Rules) "
-                "across BLEU-4 and chrF++ metrics while providing verifiable knowledge provenance and calibrated confidence."
-            )
+            "summary_analysis": self.generate_summary_analysis(strategy_results)
         }
+
+    def generate_summary_analysis(self, strategy_results: List[Dict[str, Any]]) -> str:
+        res_map = {r["strategy"]: r for r in strategy_results}
+        base_a = res_map.get("baseline_lexical")
+        base_b = res_map.get("rule_nlp")
+        sys_c = res_map.get("rag_grounded")
+
+        if not base_a or not base_b or not sys_c:
+            return "Comparative evaluation benchmark completed across tested translation strategies."
+
+        bleu_a = base_a.get("bleu_4", 0.0)
+        bleu_b = base_b.get("bleu_4", 0.0)
+        bleu_c = sys_c.get("bleu_4", 0.0)
+        chrf_a = base_a.get("chrf_score", 0.0)
+        chrf_b = base_b.get("chrf_score", 0.0)
+        chrf_c = sys_c.get("chrf_score", 0.0)
+        cov_a = base_a.get("vocabulary_coverage_rate", 0.0)
+        cov_b = base_b.get("vocabulary_coverage_rate", 0.0)
+        cov_c = sys_c.get("vocabulary_coverage_rate", 0.0)
+        n = base_a.get("total_samples", 15)
+
+        diff_bleu_ba = round(bleu_b - bleu_a, 2)
+        diff_chrf_ba = round(chrf_b - chrf_a, 2)
+        diff_bleu_cb = round(bleu_c - bleu_b, 2)
+
+        parts = []
+        parts.append(
+            f"Across {n} gold-standard benchmark sentences, rule-aware architectures "
+            f"(Baseline B and System C: BLEU-4 {bleu_b:.1f}%, chrF++ {chrf_b:.1f}) outperform direct word-by-word "
+            f"substitution (Baseline A: BLEU-4 {bleu_a:.1f}%, chrF++ {chrf_a:.1f}) by {diff_bleu_ba:+.1f} BLEU-4 "
+            f"and {diff_chrf_ba:+.1f} chrF++ points due to ASL Topic-Comment restructuring, WH-movement, and time-fronting."
+        )
+
+        if abs(diff_bleu_cb) < 0.05:
+            parts.append(
+                f"On the current fixed rule set, System C and Baseline B achieve identical surface gloss translation scores "
+                f"(BLEU-4 {bleu_c:.1f}%, chrF++ {chrf_c:.1f}). System C's distinctive contribution is verifiable knowledge grounding: "
+                f"it cross-validates all candidate tokens against the verified sign catalog ({cov_c * 100:.1f}% empirical coverage), "
+                f"retrieves vector knowledge evidence for provenance, and provides calibrated uncertainty diagnostics."
+            )
+        elif diff_bleu_cb > 0:
+            parts.append(
+                f"System C achieves a {diff_bleu_cb:+.1f} BLEU-4 margin over Baseline B through RAG-informed grammatical grounding, "
+                f"while providing verifiable citation provenance and calibrated uncertainty estimates."
+            )
+        else:
+            parts.append(
+                f"System C achieves BLEU-4 {bleu_c:.1f}% with verified catalog grounding ({cov_c * 100:.1f}% empirical coverage)."
+            )
+
+        return " ".join(parts)
 
 
 benchmark_runner = BenchmarkRunner()
